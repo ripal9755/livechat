@@ -6,44 +6,114 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Chat Application</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+            margin-top: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #ffffff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+
         #chat-box {
             height: 300px;
-            overflow-y: scroll;
+            overflow-y: auto;
             border: 1px solid #ccc;
+            border-radius: 8px;
             padding: 10px;
+            background-color: #f9f9f9;
+            margin-bottom: 20px;
+        }
+
+        .user-input {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .user-input div {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-input input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .user-input button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .user-input button:hover {
+            background-color: #45a049;
+        }
+
+        .message {
             margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background: #e9f7e9;
+        }
+
+        .message-time {
+            font-size: 12px;
+            color: #777;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #777;
+        }
+
+        a {
+            color: black;
         }
     </style>
 </head>
 
 <body>
     <h1>Live Chat Application</h1>
-    <div id="chat-box"></div>
-    <form id="chat-form">
-        <input type="text" id="username" placeholder="Enter your username" required>
-        <input type="text" id="message" placeholder="Enter your message" required>
-        <button type="submit">Send</button>
-    </form>
-    <div id="user-box">
-
+    <div class="container">
+        <div id="user-box" class="user-input"></div>
     </div>
+    <footer>&copy; 2025 Live Chat Application</footer>
 </body>
-
-</html>
-
 
 
 
 
 <script type="module">
-    // Import the functions you need from the SDKs you need
     import {
         initializeApp
     } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-app.js";
-
-    // import {
-    //     getDatabase
-    // } from "https://www.gstatic.com/firebasejs/11.8.1/firebase-database.js";
     import {
         getFirestore,
         collection,
@@ -71,33 +141,32 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Initialize Realtime Database
-    //const db = getDatabase(app);
 
-    async function sendMessage(user, message) {
+    async function sendMessage(userName, userId, message) {
         const messageRef = collection(db, "Chats");
+        document.getElementById(userId).value = "";
         // const messageRef = await addDoc(collection(db, "Chats"))
         await addDoc(messageRef, {
-            user: user,
+            userName: userName,
+            userID: userId,
             message: message,
             time: serverTimestamp()
         })
     }
 
 
-    // Function to display messages in real-time
     async function displayMessages() {
 
         const messagesRef = collection(db, "Chats");
         const q = query(messagesRef, orderBy("time", "desc"));
         const querySnapshot = await getDocs(q);
         const messages = querySnapshot.docs.map(doc => ({
-            id: doc.id, // Document ID
-            ...doc.data(), // Document data
+            id: doc.id,
+            ...doc.data(),
         }));
 
         const chatBox = document.getElementById('chat-box');
-        chatBox.innerHTML = ''; // Clear previous messages
+        chatBox.innerHTML = '';
         for (const key in messages) {
             const msg = messages[key];
             const div = document.createElement('div');
@@ -110,21 +179,10 @@
         console.log("Fetched messages:", messages);
     }
 
-    // Initialize the message display
     document.addEventListener("DOMContentLoaded", () => {
-        displayMessages();
         displayUsers();
 
     })
-
-    // Handle form submission to send messages
-    document.getElementById('chat-form').addEventListener('submit', (e) => {
-        e.preventDefault();
-        const username = document.getElementById('username').value;
-        const message = document.getElementById('message').value;
-        sendMessage(username, message);
-        document.getElementById('message').value = ''; // Clear message input
-    });
 
     async function displayUsers() {
         const userRef = collection(db,
@@ -133,27 +191,32 @@
         const querySnapshot = await getDocs(q);
         const users = querySnapshot.docs.map(doc => ({
             id: doc.id,
-            ...doc.data(), // Document data
+            ...doc.data(),
         }))
         const userBox = document.getElementById("user-box");
+        const currentDomain = window.location.href;
         userBox.innerHTML = "";
         for (const key in users) {
             const user = users[key];
             const div = document.createElement('div');
             const input = document.createElement("input");
+            const inputUser = document.createElement("a");
+            inputUser.href = currentDomain + "chatDetail.php?id=" + user.id;
+            inputUser.textContent = user.userName;
             input.type = "text";
             input.id = user.id;
             input.placeholder = "Enter your message here";
 
             const button = document.createElement("button");
             button.addEventListener("click", () => {
-                const message = document.getElementById(user.id).value; // Get the input value
-                sendMessage(user, message);
+                const message = document.getElementById(user.id).value;
+                console.log(message);
+                sendMessage(user.userName, user.id, message);
             });
             button.textContent = "Send";
+            div.appendChild(inputUser);
             div.appendChild(input);
             div.appendChild(button);
-            //div.textContent = `${user.userName}`;
             userBox.appendChild(div);
         }
     }

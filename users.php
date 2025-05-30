@@ -67,18 +67,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Initialize Realtime Database
-//const db = getDatabase(app);
-
-// async function sendMessage(user, message) {
-//     const messageRef = collection(db, "Chats");
-//     // const messageRef = await addDoc(collection(db, "Chats"))
-//     await addDoc(messageRef, {
-//         user: user,
-//         message: message,
-//         time: serverTimestamp()
-//     })
-// }
 
 document.addEventListener("DOMContentLoaded", () => {
     displayUsers();
